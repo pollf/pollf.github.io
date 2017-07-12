@@ -6,6 +6,29 @@
     border-radius:8px;
     height: 100px;
     padding: 5px;
+    margin-top: 5px;
+}
+
+.user-desc{
+    padding: 5px;
+    border:1px solid black;
+    border-radius:5px;
+    margin-top: 10px;
+    height: 30px;
+}
+
+.centered-label{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.user-you{
+    border:3px solid #33b5e5;
+}
+
+.is-talking{
+    border:3px solid #00C851;
 }
 
 .user-row{
@@ -43,7 +66,7 @@
 
 #log-text-area
 {
-  height: 100px;
-  max-height: 100px;
+  height: 300px;
+  max-height: 300px;
   width: 100%;  
 }
