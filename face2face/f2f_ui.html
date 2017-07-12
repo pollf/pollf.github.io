@@ -99,11 +99,28 @@
 
     <hr>
 
-    <label for="log-text-area" id="aboutHeading">LOG</label>
-    <textarea rows="25" cols="50" id="log-text-area" style="resize: none;">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Your Stream ID</h3>
+      </div>
+      <div class="panel-body" id="your-stream-id">
+       ID
+     </div>
+   </div>
 
-    </textarea>
+   <hr>
+
+   <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">LOG</h3>
+    </div>
+    <div class="panel-body">
+      <textarea rows="25" cols="50" id="log-text-area" style="resize: none;">
+      </textarea>
+    </div>
+  </div>
   
+
 
 </div>
 
@@ -116,6 +133,6 @@
 <!-- TokBox Functionality -->
 <script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
 <script src="js/app.js"></script>
- 
+
 </body>
 </html>

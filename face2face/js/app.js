@@ -13,6 +13,9 @@ var connectionCount = 0;
 
 var suscriberCount = 0;
 
+// stramId of current talker (used to inform incoming participants)
+var nowTalking = "nobody"
+
 // mapping zwischen stream id von subscribern und div ids
 var mapping = new Object();
 
@@ -73,6 +76,9 @@ function initializeSession() {
         streamID = subscriber.stream.streamId;
         mapping[streamID] = suscriberCount + 1;
         log("Write to mapping StreamID " + streamID)
+        // send current talk status to everyone
+        signalTalkStatus();
+        
     });
 
 
@@ -94,7 +100,12 @@ function initializeSession() {
                     //logToConsole(" Currently talking. audioLevel " + event.audioLevel);
                 }
             });
-            session.publish(publisher);
+            session.publish(publisher).on("streamCreated", function(event) {
+                log("Publisher started streaming.");
+                $("#your-stream-id").html(publisher.stream.streamId);
+                // enter meeting with audio turned off
+                publisher.publishAudio(false);
+            });
 
 
         } else {
@@ -120,6 +131,7 @@ function initializeSession() {
 
     // Connect to the session
     session.connect(token, initializePublisher);
+    
 
     function requestToTalk(event) {
         log("Let me talk event sent from " + connectionId);
@@ -128,14 +140,22 @@ function initializeSession() {
         });
     }
 
-    $("#btn_talk").click(requestToTalk);
+    function signalTalkStatus(){
+      log("Signaling talk status " + connectionId);
+      session.signal({
+        data: "signalTalkStatus#" + nowTalking
+    });  
+  }
 
-    function enableTalking() {
-        clearUserDescs();
-        log("enabling talking");
-        publisher.publishAudio(true);
+  $("#btn_talk").click(requestToTalk);
+
+  function enableTalking(talkerStreamId) {
+    clearUserDescs();
+    log("enabling talking");
+    publisher.publishAudio(true);
         // visualize talking by changing css class
         $("#user_1_desc").html("<span class='label label-success centered-label'>is talking</span>");
+        nowTalking = talkerStreamId;
     }
 
     function disableTalking(talkerStreamId) {
@@ -146,6 +166,7 @@ function initializeSession() {
         log("talkerStreamId " + talkerStreamId);
         log("Talker DIV " + talker_div);
         $("#user_" + talker_div + "_desc").html("<span class='label label-success centered-label'>is talking</span>");
+        nowTalking = talkerStreamId;
     }
 
 
@@ -153,30 +174,38 @@ function initializeSession() {
     function receiveSignal(event) {
         var res = event.data.split("#");
         var cmd = res[0];
-        var senderConnectionId = res[1];
-        var streamId = res[2];
+        
 
         switch (cmd) {
             case "requestToTalk":
+            var senderConnectionId = res[1];
+            var streamId = res[2];
                 // if its not yourself who wants to talk
                 if (senderConnectionId != connectionId) {
                     disableTalking(streamId);
                 } else {
                     // if you want to talk    
-                    enableTalking();
+                    enableTalking(streamId);
                 }
                 break;
-            default:
+                case "signalTalkStatus":
+                // only update talk status, if you have none (aka nobody talks)
+                if (nowTalking === "nobody" && res[1] != "nobody"){
+                    nowTalking = res[1];
+                    $("#user_" + mapping[nowTalking] + "_desc").html("<span class='label label-success centered-label'>is talking</span>");
+                }
+                break;    
+                default:
                 log("ERROR: signaled command not found");
+            }
         }
+
+        session.on("signal", receiveSignal);
+
     }
 
-    session.on("signal", receiveSignal);
-
-}
-
-function clearUserDescs(){
-    for (var div = 1; div <= 6; div++){
+    function clearUserDescs(){
+        for (var div = 1; div <= 6; div++){
         //log("clearing all user descs")
         $("#user_"+div+"_desc").html("");
     }
