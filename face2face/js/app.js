@@ -13,6 +13,12 @@ var connectionCount = 0;
 
 var suscriberCount = 0;
 
+// max continuous talk time in seconds +  helpers for counting down the time
+var maxTalkTime = 20;
+var talkStartedAt;
+var talkTimeNow;
+var timeCountdownInterval;
+
 // stramId of current talker (used to inform incoming participants)
 var nowTalking = "nobody"
 
@@ -23,6 +29,8 @@ var mapping = new Object();
 // (optional) add server code here
 $(document).ready(function() {
     initializeSession();
+    // set talk time progress bar width
+     $("#time_left_pb").html(maxTalkTime + " seconds");
 });
 
 //##################################################
@@ -78,7 +86,7 @@ function initializeSession() {
         log("Write to mapping StreamID " + streamID)
         // send current talk status to everyone
         signalTalkStatus();
-        
+
     });
 
 
@@ -131,7 +139,7 @@ function initializeSession() {
 
     // Connect to the session
     session.connect(token, initializePublisher);
-    
+
 
     function requestToTalk(event) {
         log("Let me talk event sent from " + connectionId);
@@ -140,22 +148,32 @@ function initializeSession() {
         });
     }
 
-    function signalTalkStatus(){
-      log("Signaling talk status " + connectionId);
-      session.signal({
-        data: "signalTalkStatus#" + nowTalking
-    });  
-  }
+    function signalTalkStatus() {
+        log("Signaling talk status " + connectionId);
+        session.signal({
+            data: "signalTalkStatus#" + nowTalking
+        });
+    }
 
-  $("#btn_talk").click(requestToTalk);
+    $("#btn_talk").click(requestToTalk);
 
-  function enableTalking(talkerStreamId) {
-    clearUserDescs();
-    log("enabling talking");
-    publisher.publishAudio(true);
+    function enableTalking(talkerStreamId) {
+        clearUserDescs();
+        log("enabling talking");
+        publisher.publishAudio(true);
         // visualize talking by changing css class
         $("#user_1_desc").html("<span class='label label-success centered-label'>is talking</span>");
         nowTalking = talkerStreamId;
+
+        // register Interval that calls countDownTalkTime every second
+        talkStartedAt = new Date().getTime() / 1000;
+        timeCountdownInterval = intervalTrigger();
+    }
+
+    function intervalTrigger(){
+        return window.setInterval(function() {
+            countDownTalkTime();
+        }, 1000);
     }
 
     function disableTalking(talkerStreamId) {
@@ -169,17 +187,23 @@ function initializeSession() {
         nowTalking = talkerStreamId;
     }
 
+    function disableTalkingAtTimeout(){
+        clearUserDescs();
+        publisher.publishAudio(false);
+    }
+
+
 
 
     function receiveSignal(event) {
         var res = event.data.split("#");
         var cmd = res[0];
-        
+
 
         switch (cmd) {
             case "requestToTalk":
-            var senderConnectionId = res[1];
-            var streamId = res[2];
+                var senderConnectionId = res[1];
+                var streamId = res[2];
                 // if its not yourself who wants to talk
                 if (senderConnectionId != connectionId) {
                     disableTalking(streamId);
@@ -188,25 +212,48 @@ function initializeSession() {
                     enableTalking(streamId);
                 }
                 break;
-                case "signalTalkStatus":
+            case "signalTalkStatus":
                 // only update talk status, if you have none (aka nobody talks)
-                if (nowTalking === "nobody" && res[1] != "nobody"){
+                if (nowTalking === "nobody" && res[1] != "nobody") {
                     nowTalking = res[1];
                     $("#user_" + mapping[nowTalking] + "_desc").html("<span class='label label-success centered-label'>is talking</span>");
                 }
-                break;    
-                default:
+                break;
+            default:
                 log("ERROR: signaled command not found");
-            }
         }
-
-        session.on("signal", receiveSignal);
-
     }
 
-    function clearUserDescs(){
-        for (var div = 1; div <= 6; div++){
+    session.on("signal", receiveSignal);
+
+    // Count down the time when talking and end talking if timout ist reached
+    function countDownTalkTime(){
+        talkTimeNow = new Date().getTime() / 1000;
+        timeTalked = talkTimeNow - talkStartedAt;
+        if(timeTalked >= maxTalkTime){
+            log("your talk time is over");
+            // remove this interval trigger
+            window.clearInterval(timeCountdownInterval);
+            disableTalkingAtTimeout();
+            // reset helper variables fpr time counting
+            talkStartedAt = null;
+            timeTalked = null;
+            // reset progress bar
+            $("#time_left_pb").html(maxTalkTime + " seconds");
+            $("#time_left_pb").css("width", "100%");
+
+            
+        }
+        // set progress bar to show time left
+        $("#time_left_pb").css("width", 100*((maxTalkTime-timeTalked)/maxTalkTime)+"%");
+        $("#time_left_pb").html(Math.floor(maxTalkTime-timeTalked) + " seconds");
+    }
+
+}
+
+function clearUserDescs() {
+    for (var div = 1; div <= 6; div++) {
         //log("clearing all user descs")
-        $("#user_"+div+"_desc").html("");
+        $("#user_" + div + "_desc").html("");
     }
 }
