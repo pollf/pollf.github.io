@@ -30,7 +30,7 @@ var mapping = new Object();
 $(document).ready(function() {
     initializeSession();
     // set talk time progress bar width
-     $("#time_left_pb").html(maxTalkTime + " seconds");
+    $("#time_left_pb").html(maxTalkTime + " seconds");
 });
 
 //##################################################
@@ -155,10 +155,17 @@ function initializeSession() {
         });
     }
 
-    function signalDoneTalking(){
+    function signalDoneTalking() {
         log("Signaling done talking from " + connectionId);
         session.signal({
             data: "doneTalking#"
+        });
+    }
+
+    // siganlisiert, wie lange die eigen Redezeit noch dauert
+    function signalTalkTimeLeft(connectionId, publisher, timeLeft) {
+        session.signal({
+            data: "TalkTimeLeft#" + connectionId + "#" + publisher.stream.streamId + "#" + timeLeft
         });
     }
 
@@ -177,7 +184,7 @@ function initializeSession() {
         timeCountdownInterval = intervalTrigger();
     }
 
-    function intervalTrigger(){
+    function intervalTrigger() {
         return window.setInterval(function() {
             countDownTalkTime();
         }, 1000);
@@ -185,6 +192,8 @@ function initializeSession() {
 
     function disableTalking(talkerStreamId) {
         clearUserDescs();
+        // remove this interval trigger
+        window.clearInterval(timeCountdownInterval);
         log("disabling talking");
         publisher.publishAudio(false);
         talker_div = mapping[talkerStreamId];
@@ -194,11 +203,21 @@ function initializeSession() {
         nowTalking = talkerStreamId;
     }
 
-    function disableTalkingAtTimeout(){
+    function disableTalkingAtTimeout() {
         clearUserDescs();
         publisher.publishAudio(false);
         // inform everyone, that you are done talking
         signalDoneTalking();
+    }
+
+    function showTimeLeftForTalker(talkerStreamId, timeLeft) {
+        talker_div = mapping[talkerStreamId];
+        //log("Time left for talker in DIV " + talker_div + ": " + timeLeft + " seconds");
+        // remove last appended time
+        //$('div:last-child', "#user_" + talker_div + "_desc").remove();
+        //$("#user_" + talker_div + "_desc").append("<div>" + Math.floor(timeLeft) + " seconds </div>");
+        $("#time_left_pb").css("width", 100 * ((timeLeft) / maxTalkTime) + "%");
+        $("#time_left_pb").html(Math.floor(timeLeft) + " seconds");
     }
 
 
@@ -230,8 +249,18 @@ function initializeSession() {
                 break;
             case "doneTalking":
                 // all users descs, because nobody talks right now
+                nowTalking = "nobody";
                 clearUserDescs();
-                break;    
+                // reset progress bar
+                $("#time_left_pb").html(maxTalkTime + " seconds");
+                $("#time_left_pb").css("width", "100%");
+                break;
+            case "TalkTimeLeft":
+                // if signal is not from publisher itself
+                if (res[1] != connectionId) {
+                    showTimeLeftForTalker(res[2], res[3]);
+                }
+                break;
             default:
                 log("ERROR: signaled command not found");
         }
@@ -240,10 +269,10 @@ function initializeSession() {
     session.on("signal", receiveSignal);
 
     // Count down the time when talking and end talking if timout ist reached
-    function countDownTalkTime(){
+    function countDownTalkTime() {
         talkTimeNow = new Date().getTime() / 1000;
         timeTalked = talkTimeNow - talkStartedAt;
-        if(timeTalked >= maxTalkTime){
+        if (timeTalked >= maxTalkTime) {
             log("your talk time is over");
             // remove this interval trigger
             window.clearInterval(timeCountdownInterval);
@@ -251,15 +280,14 @@ function initializeSession() {
             // reset helper variables fpr time counting
             talkStartedAt = null;
             timeTalked = null;
-            // reset progress bar
-            $("#time_left_pb").html(maxTalkTime + " seconds");
-            $("#time_left_pb").css("width", "100%");
+            return;
 
-            
         }
+        // signal talk time left to others
+        signalTalkTimeLeft(connectionId, publisher, (maxTalkTime - timeTalked));
         // set progress bar to show time left
-        $("#time_left_pb").css("width", 100*((maxTalkTime-timeTalked)/maxTalkTime)+"%");
-        $("#time_left_pb").html(Math.floor(maxTalkTime-timeTalked) + " seconds");
+        $("#time_left_pb").css("width", 100 * ((maxTalkTime - timeTalked) / maxTalkTime) + "%");
+        $("#time_left_pb").html(Math.floor(maxTalkTime - timeTalked) + " seconds");
     }
 
 }
