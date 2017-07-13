@@ -155,6 +155,13 @@ function initializeSession() {
         });
     }
 
+    function signalDoneTalking(){
+        log("Signaling done talking from " + connectionId);
+        session.signal({
+            data: "doneTalking#"
+        });
+    }
+
     $("#btn_talk").click(requestToTalk);
 
     function enableTalking(talkerStreamId) {
@@ -190,6 +197,8 @@ function initializeSession() {
     function disableTalkingAtTimeout(){
         clearUserDescs();
         publisher.publishAudio(false);
+        // inform everyone, that you are done talking
+        signalDoneTalking();
     }
 
 
@@ -219,6 +228,10 @@ function initializeSession() {
                     $("#user_" + mapping[nowTalking] + "_desc").html("<span class='label label-success centered-label'>is talking</span>");
                 }
                 break;
+            case "doneTalking":
+                // all users descs, because nobody talks right now
+                clearUserDescs();
+                break;    
             default:
                 log("ERROR: signaled command not found");
         }
