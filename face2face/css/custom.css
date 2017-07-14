@@ -14,7 +14,7 @@
     border:1px solid black;
     border-radius:5px;
     margin-top: 10px;
-    height: 30px;
+    min-height: 30px;
 }
 
 .centered-label{
@@ -69,4 +69,8 @@
   height: 300px;
   max-height: 300px;
   width: 100%;  
+}
+
+#user_name{
+    max-width: 30%;
 }

@@ -89,6 +89,11 @@ function initializeSession() {
 
     });
 
+    session.on("streamDestroyed", function(event){
+        // call a function to handle the disconnect of a peer
+        handleDisconnect(event.stream.streamId);
+    });
+
 
     var publisher;
 
@@ -140,6 +145,7 @@ function initializeSession() {
     // Connect to the session
     session.connect(token, initializePublisher);
 
+    // SIGNALS
 
     function requestToTalk(event) {
         log("Let me talk event sent from " + connectionId);
@@ -151,7 +157,7 @@ function initializeSession() {
     function signalTalkStatus() {
         log("Signaling talk status " + connectionId);
         session.signal({
-            data: "signalTalkStatus#" + nowTalking
+            data: "signalTalkStatus#" + nowTalking + "#" +  $("#user_1_name").html() + "#" + publisher.stream.streamId
         });
     }
 
@@ -169,7 +175,21 @@ function initializeSession() {
         });
     }
 
+    function signalUsername(){
+        username = $("#user_name").val();
+        log("a username signal will be fired from " + publisher.stream.streamId + " with name " + username);
+        session.signal({
+            data: "sendUsername#" + publisher.stream.streamId + "#" + username
+            });
+    }
+
+
+    // END SIGNALS
+
     $("#btn_talk").click(requestToTalk);
+    $("#btn_end_talk").click(disableTalkingManually);
+    // signal user name when leaving the input field
+    $("#user_name").blur(signalUsername);
 
     function enableTalking(talkerStreamId) {
         clearUserDescs();
@@ -203,11 +223,18 @@ function initializeSession() {
         nowTalking = talkerStreamId;
     }
 
-    function disableTalkingAtTimeout() {
-        clearUserDescs();
+    // aslso used for disableing talking when done talking is manually triggered
+    function disableTalkingManually() {
+        if(nowTalking === publisher.stream.streamId){
+            clearUserDescs();
+        window.clearInterval(timeCountdownInterval);
         publisher.publishAudio(false);
         // inform everyone, that you are done talking
         signalDoneTalking();
+        return;
+        }
+        log("Someone else is talking, so you can't stop it...");
+        
     }
 
     function showTimeLeftForTalker(talkerStreamId, timeLeft) {
@@ -220,6 +247,26 @@ function initializeSession() {
         $("#time_left_pb").html(Math.floor(timeLeft) + " seconds");
     }
 
+    function setReceivedUsername(username, talkerStreamId){
+        talker_div = mapping[talkerStreamId];
+        log("talkerStreamId " + talkerStreamId);
+        log("Talker DIV " + talker_div);
+        if(talkerStreamId === publisher.stream.streamId){
+             $("#user_1_name").html("<span class='label label-info centered-label'>" + username.trim() + "</span>");
+         }else{
+            $("#user_" + talker_div + "_name").html("<span class='label label-info centered-label'>" + username.trim() + "</span>");
+         }
+        
+    }
+
+
+    function handleDisconnect(streamId){
+        div = mapping[streamId];
+        log("handle disconnect is called with streamID " + streamId);
+        mapping[streamId] = null;
+        $("#user_" + div + "_desc").html("");
+        $("#user_" + div + "_name").html("");
+    }
 
 
 
@@ -246,6 +293,17 @@ function initializeSession() {
                     nowTalking = res[1];
                     $("#user_" + mapping[nowTalking] + "_desc").html("<span class='label label-success centered-label'>is talking</span>");
                 }
+
+                // set reieved name for every peer
+
+                username = res[2];
+                streamId = res[3];
+                log("getting name from talk Status: " + username + " -- " + streamId); 
+                if(username.trim().length > 0 && streamId != publisher.stream.streamId){
+                    setReceivedUsername(username, streamId);
+                }
+                
+
                 break;
             case "doneTalking":
                 // all users descs, because nobody talks right now
@@ -261,6 +319,9 @@ function initializeSession() {
                     showTimeLeftForTalker(res[2], res[3]);
                 }
                 break;
+            case "sendUsername":
+                setReceivedUsername(res[2], res[1]);
+                break;        
             default:
                 log("ERROR: signaled command not found");
         }
@@ -275,8 +336,8 @@ function initializeSession() {
         if (timeTalked >= maxTalkTime) {
             log("your talk time is over");
             // remove this interval trigger
-            window.clearInterval(timeCountdownInterval);
-            disableTalkingAtTimeout();
+            //window.clearInterval(timeCountdownInterval);
+            disableTalkingManually();
             // reset helper variables fpr time counting
             talkStartedAt = null;
             timeTalked = null;
