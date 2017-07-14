@@ -283,8 +283,12 @@ function initializeSession() {
                 if (senderConnectionId != connectionId) {
                     disableTalking(streamId);
                 } else {
-                    // if you want to talk    
-                    enableTalking(streamId);
+                    // if you want to talk and are not already talking
+                    if(nowTalking != publisher.stream.streamId){
+                        enableTalking(streamId);
+                    }else{
+                        log("you are already talking... nice try");
+                    }    
                 }
                 break;
             case "signalTalkStatus":
