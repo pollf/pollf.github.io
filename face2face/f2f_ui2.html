@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Face2Face</title>
+   <!-- Bootstrap -->
+   <link href="css/bootstrap.min.css" rel="stylesheet">
+   <link href="css/superhero.css" rel="stylesheet">
+   <link href="css/custom2.css" rel="stylesheet">
+</head>
+<body>
+   <div class="container">
+      <div class="jumbotron">
+         <h1>face2face</h1>
+         <p>a simple test ui for managed voice meetings {testversion 2}</p>
+      </div>
+      <div class="panel panel-default" id="start_panel">
+         <div class="panel-heading"> <span class="glyphicon glyphicon-globe" aria-hidden="true"></span> Join the Session</div>
+         <div class="panel-body">
+            <div class="row">
+               <div class="col-sm-6">
+                  <input type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1" id="user_name">
+               </div>
+               <div class="col-sm-6">
+                  <button type="button" class="btn btn-default" id="btn_join_session">Join</button>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class="panel panel-default" id="meeting-panel">
+         <div class="panel-heading">
+            <h3 class="panel-title"><span class="glyphicon glyphicon-headphones" aria-hidden="true"></span> Meeting</h3>
+         </div>
+         <div class="panel-body">
+            <div id="stream-area">
+
+               <!-- basic layout of stream-box for testing. Will later be generated in JS -->
+
+               <div class="stream-box" id="streambox-streamid">
+                  <div>
+                     <span class="label label-info label-name" id="name-streamid">Name</span>
+                  </div>
+                  <div id="streamdiv-streamid">
+                  </div>
+                  <div id="talkstatus-streamid">
+                     <span class="label label-info label-talkstatus" id="name-streamid">is listening</span>
+                  </div>
+                  <div class="timeleft-progress-wrapper">
+                     <div class="progress">
+                  <div class="progress-bar timeleft-progress" id="timeleft-streamid" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+                     x seconds
+                  </div>
+               </div>
+                  </div>
+               </div>
+
+
+            </div>
+            <br class="clearBoth" />
+            <div class="btn-group" role="group" aria-label="...">
+               <button type="button" class="btn btn-primary" id="btn_letmetalk"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Let me talk</button>
+               <button type="button" class="btn btn-info" id="btn_donetalking"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span> Done talking</button>
+               <!--<button type="button" class="btn btn-default">dummy</button>-->
+               <!--<button type="button" class="btn btn-default">dummy</button>-->
+            </div>
+         </div>
+      </div>
+      <div class="panel panel-default">
+         <div class="panel-heading">
+            <h3 class="panel-title"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Log</h3>
+         </div>
+         <div class="panel-body">
+            <textarea rows="25" cols="50" id="log-text-area" style="resize: none;" readonly>
+            </textarea>
+         </div>
+      </div>
+   </div>
+   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+   <!-- Include all compiled plugins (below), or include individual files as needed -->
+   <script src="js/bootstrap.min.js"></script>
+   <!-- TokBox Functionality -->
+   <script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
+   <script src="js/app2.js"></script>
+</body>
+</html>

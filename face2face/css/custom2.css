@@ -1,0 +1,50 @@
+#log-text-area
+{
+  height: 300px;
+  max-height: 300px;
+  width: 100%;  
+}
+
+#meeting-panel{
+	display:none;
+
+}
+
+#stream-area{
+	min-height: 200px;
+	/*border: 1px solid black;*/
+}
+
+.stream-box{
+	float: left;
+	padding: 0.25em;
+	margin: 1em;
+	width: 10em;
+	height: 13em;
+	border: 2px solid #1C2331;
+	border-radius: 2px;
+}
+
+.clearBoth { 
+	clear:both; 
+}
+
+.label-name{
+	display: block;
+	margin: 0.5em;
+}
+
+.label-talkstatus{
+	display: block;
+	margin: 0.5em;
+}
+
+.timeleft-progress-wrapper{
+	margin: 0.5em;
+}
+
+/* for testing */
+#streamdiv-streamid{
+	min-height: 50%;
+	border: 1px solid #1C2331;
+}
