@@ -21,7 +21,7 @@
          <div class="panel-body">
             <div class="row">
                <div class="col-sm-6">
-                  <input type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1" id="user_name">
+                  <input type="text" class="form-control" placeholder="Username" aria-describedby="basic-addon1" id="user-name-input">
                </div>
                <div class="col-sm-6">
                   <button type="button" class="btn btn-default" id="btn_join_session">Join</button>
@@ -37,52 +37,64 @@
             <div id="stream-area">
 
                <!-- basic layout of stream-box for testing. Will later be generated in JS -->
-
-               <div class="stream-box" id="streambox-streamid">
-                  <div>
-                     <span class="label label-info label-name" id="name-streamid">Name</span>
+               
+               <!--
+               <div class="panel panel-info panel-stream">
+                  <div class="panel-heading">
+                     <h3 class="panel-title" id="stream-panel-username-streamid">UserNameHere</h3>
                   </div>
-                  <div id="streamdiv-streamid">
-                  </div>
-                  <div id="talkstatus-streamid">
-                     <span class="label label-info label-talkstatus" id="name-streamid">is listening</span>
-                  </div>
-                  <div class="timeleft-progress-wrapper">
-                     <div class="progress">
-                  <div class="progress-bar timeleft-progress" id="timeleft-streamid" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
-                     x seconds
-                  </div>
-               </div>
-                  </div>
-               </div>
-
-
-            </div>
-            <br class="clearBoth" />
-            <div class="btn-group" role="group" aria-label="...">
-               <button type="button" class="btn btn-primary" id="btn_letmetalk"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Let me talk</button>
-               <button type="button" class="btn btn-info" id="btn_donetalking"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span> Done talking</button>
-               <!--<button type="button" class="btn btn-default">dummy</button>-->
-               <!--<button type="button" class="btn btn-default">dummy</button>-->
+                  <div class="panel-body" id="stream-panel-body-streamid">
+                     <table class="table-bordered stream-info-table">
+                       <tr>
+                          <td>
+                           <big><span class="label label-info label-talkstatus" id="talking-info-streamid">is listening</span></big>
+                        </td>
+                     </tr>
+                     <tr>
+                     <td>
+                     <div class="timeleft-progress-wrapper">
+                        <div class="progress-bar timeleft-progress" id="talking-time-streamid" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;">
+                           x seconds
+                        </div>
+                     </div> 
+                     </td>
+                  </tr>
+               </table>
             </div>
          </div>
-      </div>
-      <div class="panel panel-default">
-         <div class="panel-heading">
-            <h3 class="panel-title"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Log</h3>
+         --> 
+
+       
+
+            <!-- End Streamarea -->
          </div>
-         <div class="panel-body">
-            <textarea rows="25" cols="50" id="log-text-area" style="resize: none;" readonly>
-            </textarea>
-         </div>
+         <br class="clearBoth" />
+         <!--<div class="btn-group" role="group" aria-label="...">-->
+            <button type="button" class="btn btn-primary" id="btn_letmetalk"><span class="glyphicon glyphicon-volume-up" aria-hidden="true"></span> Let me talk</button>
+            <button type="button" class="btn btn-info" id="btn_donetalking"><span class="glyphicon glyphicon-volume-off" aria-hidden="true"></span> Done talking</button>
+
+            <!--<button type="button" class="btn btn-default">dummy</button>-->
+            <!--<button type="button" class="btn btn-default">dummy</button>-->
+         <!--</div>-->
+         <button type="button" class="btn btn-info" id="btn_toggle_video"><span class="glyphicon glyphicon-facetime-video" aria-hidden="true"></span> Toggle Video</button>
       </div>
    </div>
-   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-   <!-- Include all compiled plugins (below), or include individual files as needed -->
-   <script src="js/bootstrap.min.js"></script>
-   <!-- TokBox Functionality -->
-   <script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
-   <script src="js/app2.js"></script>
+   <div class="panel panel-default">
+      <div class="panel-heading">
+         <h3 class="panel-title"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Log</h3>
+      </div>
+      <div class="panel-body">
+         <textarea rows="25" cols="50" id="log-text-area" style="resize: none;" readonly>
+         </textarea>
+      </div>
+   </div>
+</div>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<!-- TokBox Functionality -->
+<script src="https://static.opentok.com/v2/js/opentok.min.js"></script>
+<script src="js/app2.js"></script>
 </body>
 </html>

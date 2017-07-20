@@ -43,8 +43,19 @@
 	margin: 0.5em;
 }
 
-/* for testing */
-#streamdiv-streamid{
-	min-height: 50%;
-	border: 1px solid #1C2331;
+
+.panel-stream{
+	width: 20%;
+	float: left;
+	margin: 1em;
 }
+
+/* heres the actual video stream */
+.stream-panel-body{
+	height: 100px;
+}
+
+.stream-info-table{
+	width: 100%;
+}
+
