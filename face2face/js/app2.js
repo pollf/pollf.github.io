@@ -183,6 +183,21 @@ function signalTalkTimeLeft(talkTimeLeft){
     });
 }
 
+// Signal Agreement to something the talker just said
+function signalExpressAgreement(){
+	session.signal({
+        data: "expressAgreement#" + myFullUserName
+    });
+}
+
+// Signal Disagreement to something the talker just said
+function signalExpressDisagreement(){
+	session.signal({
+        data: "expressDisagreement#" + myFullUserName
+    });
+}
+
+
 // ##################################################################
 // Processing Signals
 function receiveSignal(event) {
@@ -206,7 +221,15 @@ function receiveSignal(event) {
         	senderFullName = res[1];
         	talkTimeLeft = res[2];
         	handleTalkTimeLeft(senderFullName, talkTimeLeft); 
-        	break;  
+        	break;
+        case "expressAgreement":
+        	senderFullName = res[1];
+        	expressAgreement(senderFullName);
+        	break;
+        case "expressDisagreement":
+        	senderFullName = res[1];
+        	expressDisagreement(senderFullName);
+        	break;	
         default:
             log("ERROR: signaled command not found " + cmd);
     }
@@ -299,6 +322,10 @@ $("#btn_donetalking").click(function() {
         signalDoneTalking();
     }
 });
+
+// React to clicks on agreement Buttons
+$("#btn_agreement").click(signalExpressAgreement);
+$("#btn_disagreement").click(signalExpressDisagreement);
 
 // ############################################################################
 // Timekeeping
@@ -397,4 +424,30 @@ function addStreamToHTML(fullUserName, style) {
 
     // Insert html to Stream Area
     $(streamArea).append(template);
+}
+
+// Signal Agreement or Disagreement nonverbaly
+// ############################################################################
+function expressAgreement(fullUserName){
+	// delete appended span
+	$("#animate-agreement").remove();
+	$(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-up" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
+	$("#animate-agreement").animate({
+            opacity: '1.0'
+        });
+	$("#animate-agreement").animate({
+            opacity: '0.0'
+        });
+}
+
+function expressDisagreement(fullUserName){
+	// delete appended span
+	$("#animate-agreement").remove();
+	$(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-down" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
+	$("#animate-agreement").animate({
+            opacity: '1.0'
+        });
+	$("#animate-agreement").animate({
+            opacity: '0.0'
+        });
 }
