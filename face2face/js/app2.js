@@ -47,6 +47,11 @@ var uiQueueList = "#queue-area-list-container";
 var maxTalkingTime = 60; // in seconds
 var talkingStartedAt;
 var timeCountdownInterval;
+// for audi level monitoring
+var currentAudioLevel;
+var histAudioLevel = [];
+// used for couning how many seconds at a time the talker was silent
+var secondsSilent;
 
 // ############################################################################
 
@@ -131,10 +136,10 @@ function initializeSession() {
 
     myPublisher.setStyle('audioLevelDisplayMode', 'on');
     myPublisher.on('audioLevelUpdated', function(event) {
-        var audioLevel = event.audioLevel;
-        if (audioLevel > 0.2) {
-            //logToConsole(" Currently talking. audioLevel " + event.audioLevel);
-        }
+        currentAudioLevel = event.audioLevel;
+        //if (audioLevel > 0.2) {
+            //log(" Currently talking. audioLevel " + event.audioLevel);
+        //}
     });
 
     function publishStream() {
@@ -370,6 +375,80 @@ function intervalTrigger() {
 }
 
 function countDownTalkTime() {
+
+	if (secondsSilent > 6){
+		// reset
+		secondsSilent = 0;
+		log("you don't say much... talk stopped.");
+	    signalDoneTalking();
+	    // remove this interval trigger
+	    window.clearInterval(timeCountdownInterval);
+	    talkStartedAt = null;
+	    timeTalked = null;
+	    return;
+	}
+
+	if(currentAudioLevel < 0.1){
+		secondsSilent += 1;
+	}else {
+		secondsSilent = 0;
+	}
+
+	// issue warning to talker
+	if(secondsSilent > 3){
+		log("use your time to talk...");
+	}
+
+
+	
+	/*
+	// this works already
+
+	if(histAudioLevel.length < 14){
+		histAudioLevel.push(currentAudioLevel);
+	}else{
+		histAudioLevel.shift();
+		histAudioLevel.push(currentAudioLevel);
+
+		var sumOld = histAudioLevel.slice(0,(histAudioLevel.length/2)-1).reduce(function(a, b) { return a + b; });
+		var sumNew = histAudioLevel.slice(histAudioLevel.length/2, histAudioLevel.length -1).reduce(function(a, b) { return a + b; });
+		var avgOld = sumOld/(histAudioLevel.length/2);
+		var avgNew = sumNew/(histAudioLevel.length/2);
+		log("avg old: " + avgOld);
+		log("avg new: " + avgNew);
+
+		// if differnce between averages is more the 95% of old average: stop talking
+		if(Math.abs(avgOld - avgNew) > 0.95 * avgOld){
+			log("you don't say much... talk stopped.");
+	        signalDoneTalking();
+	        // remove this interval trigger
+	        window.clearInterval(timeCountdownInterval);
+	        talkStartedAt = null;
+	        timeTalked = null;
+	        return;
+		}
+		
+		// Till here
+		*/
+
+		// caluclate average
+		// var sum = histAudioLevel.reduce(function(a, b) { return a + b; });
+		// var avg = sum / histAudioLevel.length;
+		// log("avg Audio level in the last 8 seconds: " + avg);
+		//log(JSON.stringify(histAudioLevel));
+		/*
+		if(avg <= 0.1){
+			log("you don't say much... talk stopped.");
+	        signalDoneTalking();
+	        // remove this interval trigger
+	        window.clearInterval(timeCountdownInterval);
+	        talkStartedAt = null;
+	        timeTalked = null;
+	        return;
+		}
+		*/
+	//}
+
     var talkTimeNow = new Date().getTime() / 1000;
     var timeTalked = talkTimeNow - talkingStartedAt;
     if (timeTalked >= maxTalkingTime) {
