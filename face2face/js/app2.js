@@ -38,6 +38,7 @@ var uiTalkTime = "#talking-time-";
 var streamArea = "#stream-area";
 var uiUserNameInput = "#user-name-input";
 var uiLog = "#log-text-area";
+var uiQueueList = "#queue-area-list-container";
 
 
 
@@ -93,6 +94,10 @@ function initializeSession() {
 
     // Subscribe to a newly created stream
     session.on('streamCreated', function(event) {
+    	// if someone is talking
+    	if(talksNow != null){
+    		signalQueueStatus();
+    	}
         // Create HTML for Subscribing
         addStreamToHTML(event.stream.name, "info");
         var element = uiStreamContainer.replace("#", "") + event.stream.name;
@@ -197,6 +202,13 @@ function signalExpressDisagreement(){
     });
 }
 
+// Signal status of current talkingQueue (used to inform new users on the status)
+// Only users with a empty Queue should react to this signal
+function signalQueueStatus(){
+	session.signal({
+        data: "queueStatus#" + talksNow + "#" + JSON.stringify(talkingQueue)
+    });
+}
 
 // ##################################################################
 // Processing Signals
@@ -206,30 +218,35 @@ function receiveSignal(event) {
 
     switch (cmd) {
         case "log":
-            message = res[1];
+            var message = res[1];
             logGlobal(message);
             break;
         case "letMeTalk":
-            senderFullName = res[1];
+            var senderFullName = res[1];
             handleLetMeTalk(senderFullName);
             break;
         case "doneTalking":
-            senderFullName = res[1];
+            var senderFullName = res[1];
             handleDoneTalking(senderFullName);
             break;
         case "talkTimeLeft":
-        	senderFullName = res[1];
-        	talkTimeLeft = res[2];
+        	var senderFullName = res[1];
+        	var talkTimeLeft = res[2];
         	handleTalkTimeLeft(senderFullName, talkTimeLeft); 
         	break;
         case "expressAgreement":
-        	senderFullName = res[1];
+        	var senderFullName = res[1];
         	expressAgreement(senderFullName);
         	break;
         case "expressDisagreement":
-        	senderFullName = res[1];
+        	var senderFullName = res[1];
         	expressDisagreement(senderFullName);
-        	break;	
+        	break;
+        case "queueStatus":
+        	var talksNow = res[1];
+        	var queueJson = res[2];
+        	handleQueueStatusUpdate(talksNow, queueJson);
+        	break;		
         default:
             log("ERROR: signaled command not found " + cmd);
     }
@@ -258,6 +275,8 @@ function handleLetMeTalk(streamName) {
         if (inQueue == -1 && talksNow != streamName) {
             talkingQueue.push(streamName);
             log("Queue: " + JSON.stringify(talkingQueue));
+            // Update Queue UI 
+            updateUiQueue();
         }
     }
 }
@@ -286,12 +305,27 @@ function handleDoneTalking(streamName) {
             timeCountdownInterval = intervalTrigger();
         }
         updateUiTalkStatus();
+        // Update Queue UI 
+        updateUiQueue();
     }
 }
 
 function handleTalkTimeLeft(streamName, talkTimeLeft){
 	$(uiTalkTime + streamName).css("width", 100 * (talkTimeLeft / maxTalkingTime) + "%");
-    $(uiTalkTime + streamName).html(talkTimeLeft);
+    $(uiTalkTime + streamName).html(Math.floor(talkTimeLeft));
+}
+
+function handleQueueStatusUpdate(talksNowPassed, queueJson){
+	// only if own queue is empty
+	if(talkingQueue.length === 0){
+		// BUG?!
+		talksNow = talksNowPassed;
+		var arr = Object.values(JSON.parse(queueJson));
+		talkingQueue = arr.slice();
+		log("Received Queue Status");
+		updateUiTalkStatus();
+		updateUiQueue();
+	}
 }
 
 // React to Button Clicks
@@ -349,7 +383,8 @@ function countDownTalkTime() {
 
     }
     // signal talk time left to others
-    signalTalkTimeLeft(Math.floor(maxTalkingTime - timeTalked));
+    //signalTalkTimeLeft(Math.floor(maxTalkingTime - timeTalked));
+    signalTalkTimeLeft(maxTalkingTime - timeTalked);
 }
 
 
@@ -389,6 +424,19 @@ function updateUiTalkStatus() {
         if (talksNow != null) {
             $(uiTalkStatus + talksNow).html(`<span class="glyphicon glyphicon-volume-up" aria-hidden="true">`);
         }
+}
+
+function updateUiQueue(){
+	// clear html element
+	$(uiQueueList).html("");
+	// write new ol from current waiting list
+	var html = "<ol>";
+	for (var i =0; i < talkingQueue.length; i++) {
+    	html += "<li>" + talkingQueue[i].split("-")[0]+ "</li>";
+	}
+	html += "</ol>";
+	$(uiQueueList).html(html);
+
 }
 
 

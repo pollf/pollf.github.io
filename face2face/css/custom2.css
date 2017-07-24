@@ -15,6 +15,10 @@
 	/*border: 1px solid black;*/
 }
 
+#log-panel{
+	width: 65%;
+}
+
 .stream-box{
 	float: left;
 	padding: 0.25em;
@@ -23,6 +27,10 @@
 	height: 13em;
 	border: 2px solid #1C2331;
 	border-radius: 2px;
+}
+
+.queue-area{
+	height: 200px;
 }
 
 .clearBoth { 
