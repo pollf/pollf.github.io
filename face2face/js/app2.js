@@ -118,6 +118,8 @@ function initializeSession() {
         // Remove affected Stream Container from DOM
         var element = event.stream.name;
         $("#" + element).remove();
+        // if you are currently talking, signal done talking
+        signalDoneTalking();
     });
 
     // Create a publisher
