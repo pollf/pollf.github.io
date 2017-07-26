@@ -59,6 +59,11 @@
 	margin: 1em;
 }
 
+.panel-stream-active{
+	border: 5px solid #0099CC;
+	border-radius: 3px;
+}
+
 /* heres the actual video stream */
 .stream-panel-body{
 	height: 100px;

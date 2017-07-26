@@ -300,6 +300,8 @@ function handleLetMeTalk(streamName) {
             log("Queue: " + JSON.stringify(talkingQueue));
             // Update Queue UI 
             updateUiQueue();
+            // visualize Queue Injection
+            visualizeAddQueue(streamName);
         }
     }
 }
@@ -358,6 +360,8 @@ function handleLeaveQueue(senderFullName) {
     })
     talkingQueue = newQueue;
     updateUiQueue();
+    // visualize leaving the Queue
+    visualizeLeaveQueue(senderFullName);
 }
 
 // React to Button Clicks
@@ -556,9 +560,11 @@ function updateUiTalkStatus() {
     //log("Update Ui Talk status called")
     $(".label-talkstatus").html("");
     $(".timeleft-progress").html("");
+    $(".panel-stream").removeClass("panel-stream-active");
     $(".timeleft-progress").css("width", "100%");
 
     if (talksNow != null) {
+        $("#" + talksNow).addClass("panel-stream-active");
         $(uiTalkStatus + talksNow).html(`<span class="glyphicon glyphicon-volume-up" aria-hidden="true">`);
     }
 }
@@ -646,7 +652,8 @@ function expressAgreement(fullUserName) {
         opacity: '1.0'
     });
     $("#animate-agreement").animate({
-        opacity: '0.0',
+        opacity: '0.0'
+    }, {
         complete: function() {
             $("#animate-agreement").remove();
         }
@@ -679,15 +686,85 @@ function expressDisagreement(fullUserName) {
     $(document.body).append(html);
     $("#animate-disagreement").css("left", centerX - 50);
     $("#animate-disagreement").css("top", centerY - 50);
-    $("#animate-disagreement").css("position", "fixed");
+    //$("#animate-disagreement").css("position", "fixed");
 
     $("#animate-disagreement").animate({
         opacity: '1.0'
     });
     $("#animate-disagreement").animate({
-        opacity: '0.0',
+        opacity: '0.0'
+    }, {
         complete: function() {
             $("#animate-disagreement").remove();
+        }
+    });
+}
+
+// Visualize adding or leaving the Queue
+// ############################################################################
+function visualizeAddQueue(streamName) {
+    var position = $(uiStreamContainer + streamName).offset();
+    var width = $(uiStreamContainer + streamName).width();
+    var height = $(uiStreamContainer + streamName).height();
+    var centerX = position.left + width / 2;
+    var centerY = position.top + height / 2;
+
+    $("#animate-add-queue").remove();
+
+    var html = `<span class="glyphicon glyphicon-plus-sign" id="animate-add-queue" aria-hidden="true" style="position: fixed;">`;
+
+    $(document.body).append(html);
+    $("#animate-add-queue").css("left", centerX);
+    $("#animate-add-queue").css("top", centerY);
+
+
+    var positionQueue = $("#queue-area-list-container").offset();
+    var widthQueue = $("#queue-area-list-container").width();
+    var heightQueue = $("#queue-area-list-container").height();
+    var centerXQueue = positionQueue.left + widthQueue / 2;
+    var centerYQueue = positionQueue.top + heightQueue / 2;
+
+    $("#animate-add-queue").animate({
+        top: centerYQueue,
+        left: centerXQueue
+    }, {
+        duration: 1000,
+        complete: function() {
+            $("#animate-add-queue").remove();
+        }
+    });
+
+}
+
+function visualizeLeaveQueue(streamName) {
+    var position = $(uiStreamContainer + streamName).offset();
+    var width = $(uiStreamContainer + streamName).width();
+    var height = $(uiStreamContainer + streamName).height();
+    var centerX = position.left + width / 2;
+    var centerY = position.top + height / 2;
+
+    $("#animate-leave-queue").remove();
+
+    var html = `<span class="glyphicon glyphicon-minus-sign" id="animate-leave-queue" aria-hidden="true" style="position: fixed;">`;
+
+
+    var positionQueue = $("#queue-area-list-container").offset();
+    var widthQueue = $("#queue-area-list-container").width();
+    var heightQueue = $("#queue-area-list-container").height();
+    var centerXQueue = positionQueue.left + widthQueue / 2;
+    var centerYQueue = positionQueue.top + heightQueue / 2;
+
+    $(document.body).append(html);
+    $("#animate-leave-queue").css("left", centerXQueue);
+    $("#animate-leave-queue").css("top", centerYQueue);
+
+    $("#animate-leave-queue").animate({
+        top: centerY,
+        left: centerX
+    }, {
+        duration: 1000,
+        complete: function() {
+            $("#animate-leave-queue").remove();
         }
     });
 }
