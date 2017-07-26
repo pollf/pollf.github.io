@@ -1,13 +1,10 @@
-#log-text-area
-{
-  height: 300px;
-  max-height: 300px;
-  width: 100%;  
+#log-text-area{
+  width: 100%;
+  height: 100%;
 }
 
 #meeting-panel{
 	display:none;
-
 }
 
 #stream-area{
@@ -16,7 +13,8 @@
 }
 
 #log-panel{
-	width: 65%;
+	width: 100%;
+	height: 200px;
 }
 
 .stream-box{
@@ -24,6 +22,7 @@
 	padding: 0.25em;
 	margin: 1em;
 	width: 10em;
+
 	height: 13em;
 	border: 2px solid #1C2331;
 	border-radius: 2px;
@@ -54,6 +53,8 @@
 
 .panel-stream{
 	width: 20%;
+	min-width: 8em;
+	min-height: 16em;
 	float: left;
 	margin: 1em;
 }

@@ -55,6 +55,9 @@ var secondsSilent;
 
 // ############################################################################
 
+//var rect = document.getElementById("log-panel").getBoundingClientRect();
+//log(rect.top, rect.right, rect.bottom, rect.left);
+
 
 // The beginning
 // ############################################################################
@@ -99,10 +102,10 @@ function initializeSession() {
 
     // Subscribe to a newly created stream
     session.on('streamCreated', function(event) {
-    	// if someone is talking
-    	if(talksNow != null){
-    		signalQueueStatus();
-    	}
+        // if someone is talking
+        if (talksNow != null) {
+            signalQueueStatus();
+        }
         // Create HTML for Subscribing
         addStreamToHTML(event.stream.name, "info");
         var element = uiStreamContainer.replace("#", "") + event.stream.name;
@@ -139,8 +142,9 @@ function initializeSession() {
     myPublisher.setStyle('audioLevelDisplayMode', 'on');
     myPublisher.on('audioLevelUpdated', function(event) {
         currentAudioLevel = event.audioLevel;
+        //log("Audio Level " + currentAudioLevel);
         //if (audioLevel > 0.2) {
-            //log(" Currently talking. audioLevel " + event.audioLevel);
+        //log(" Currently talking. audioLevel " + event.audioLevel);
         //}
     });
 
@@ -189,31 +193,39 @@ function signalDoneTalking() {
 }
 
 // Signal your remaining talk time
-function signalTalkTimeLeft(talkTimeLeft){
-	session.signal({
+function signalTalkTimeLeft(talkTimeLeft) {
+    session.signal({
         data: "talkTimeLeft#" + myFullUserName + "#" + talkTimeLeft
     });
 }
 
 // Signal Agreement to something the talker just said
-function signalExpressAgreement(){
-	session.signal({
+function signalExpressAgreement() {
+    session.signal({
         data: "expressAgreement#" + myFullUserName
     });
 }
 
 // Signal Disagreement to something the talker just said
-function signalExpressDisagreement(){
-	session.signal({
+function signalExpressDisagreement() {
+    session.signal({
         data: "expressDisagreement#" + myFullUserName
     });
 }
 
 // Signal status of current talkingQueue (used to inform new users on the status)
 // Only users with a empty Queue should react to this signal
-function signalQueueStatus(){
-	session.signal({
+function signalQueueStatus() {
+    session.signal({
         data: "queueStatus#" + talksNow + "#" + JSON.stringify(talkingQueue)
+    });
+}
+
+// Signal that you want to leave the Queue if you are in it
+function signalLeaveQueue() {
+    log("You dispatched a signalLeaveQueue");
+    session.signal({
+        data: "leaveQueue#" + myFullUserName
     });
 }
 
@@ -237,23 +249,27 @@ function receiveSignal(event) {
             handleDoneTalking(senderFullName);
             break;
         case "talkTimeLeft":
-        	var senderFullName = res[1];
-        	var talkTimeLeft = res[2];
-        	handleTalkTimeLeft(senderFullName, talkTimeLeft); 
-        	break;
+            var senderFullName = res[1];
+            var talkTimeLeft = res[2];
+            handleTalkTimeLeft(senderFullName, talkTimeLeft);
+            break;
         case "expressAgreement":
-        	var senderFullName = res[1];
-        	expressAgreement(senderFullName);
-        	break;
+            var senderFullName = res[1];
+            expressAgreement(senderFullName);
+            break;
         case "expressDisagreement":
-        	var senderFullName = res[1];
-        	expressDisagreement(senderFullName);
-        	break;
+            var senderFullName = res[1];
+            expressDisagreement(senderFullName);
+            break;
         case "queueStatus":
-        	var talksNow = res[1];
-        	var queueJson = res[2];
-        	handleQueueStatusUpdate(talksNow, queueJson);
-        	break;		
+            var talksNow = res[1];
+            var queueJson = res[2];
+            handleQueueStatusUpdate(talksNow, queueJson);
+            break;
+        case "leaveQueue":
+            var senderFullName = res[1];
+            handleLeaveQueue(senderFullName);
+            break;
         default:
             log("ERROR: signaled command not found " + cmd);
     }
@@ -267,7 +283,7 @@ function handleLetMeTalk(streamName) {
         // if you are the one that wants to talk
         if (streamName === myFullUserName) {
             myPublisher.publishAudio(true)
-            // for timekeeping
+                // for timekeeping
             talkingStartedAt = new Date().getTime() / 1000;
             timeCountdownInterval = intervalTrigger();
         }
@@ -292,9 +308,9 @@ function handleDoneTalking(streamName) {
     // if ther is nobody waiting to talk
     if (streamName === myFullUserName) {
         myPublisher.publishAudio(false);
-        updateUiTalkStatus();
         // Stop Timer
         window.clearInterval(timeCountdownInterval);
+        updateUiTalkStatus();
     }
     if (talkingQueue.length == 0) {
         talksNow = null;
@@ -317,22 +333,31 @@ function handleDoneTalking(streamName) {
     }
 }
 
-function handleTalkTimeLeft(streamName, talkTimeLeft){
-	$(uiTalkTime + streamName).css("width", 100 * (talkTimeLeft / maxTalkingTime) + "%");
+function handleTalkTimeLeft(streamName, talkTimeLeft) {
+    $(uiTalkTime + streamName).css("width", 100 * (talkTimeLeft / maxTalkingTime) + "%");
     $(uiTalkTime + streamName).html(Math.floor(talkTimeLeft));
 }
 
-function handleQueueStatusUpdate(talksNowPassed, queueJson){
-	// only if own queue is empty
-	if(talkingQueue.length === 0){
-		// BUG?!
-		talksNow = talksNowPassed;
-		var arr = Object.values(JSON.parse(queueJson));
-		talkingQueue = arr.slice();
-		log("Received Queue Status");
-		updateUiTalkStatus();
-		updateUiQueue();
-	}
+function handleQueueStatusUpdate(talksNowPassed, queueJson) {
+    // only if own queue is empty
+    if (talkingQueue.length === 0) {
+        // BUG?!
+        talksNow = talksNowPassed;
+        var arr = Object.values(JSON.parse(queueJson));
+        talkingQueue = arr.slice();
+        log("Received Queue Status");
+        updateUiTalkStatus();
+        updateUiQueue();
+    }
+}
+
+function handleLeaveQueue(senderFullName) {
+    // Delete Sender from Queue and update Ui accordingly
+    var newQueue = talkingQueue.filter(function(e) {
+        return e !== senderFullName
+    })
+    talkingQueue = newQueue;
+    updateUiQueue();
 }
 
 // React to Button Clicks
@@ -350,19 +375,50 @@ $("#btn_toggle_video").click(function() {
 });
 
 // Send a let me talk signal
-$("#btn_letmetalk").click(function() {
-    log(myPublisher.stream.name + "  wants to talk", true);
-    signalLetMeTalk();
-});
+$("#btn_letmetalk").click(manageTalk);
+
+// A click on Spacebar does the same than a click on the talk button
+document.body.onkeyup = function(e) {
+    if (e.keyCode == 32) {
+        manageTalk();
+    }
+}
+
+// this blocks the page from scrolling down when spacebar is pressed
+document.body.onkeydown = function(e) {
+    if (e.keyCode == 32) {
+        return false;
+    }
+}
+
+
+function manageTalk() {
+    inQueue = $.inArray(myFullUserName, talkingQueue);
+    // if you are not currently talking 
+    if (talksNow != myFullUserName && inQueue == -1) {
+        //log(myPublisher.stream.name + "  wants to talk", true);
+        signalLetMeTalk();
+        // if you are talking, this stops the talking    
+    } else if (talksNow === myFullUserName) {
+        signalDoneTalking();
+    }
+    // if you are in the waiting list, this gets you out of it again
+    else if (inQueue != -1) {
+        signalLeaveQueue();
+    }
+}
 
 // Send a done talking Signal
 // Send a let me talk signal
+// All talk management will be one button and current status
+/*
 $("#btn_donetalking").click(function() {
     if (talksNow === myFullUserName) {
         log(myPublisher.stream.name + "  will stop talking", true);
         signalDoneTalking();
     }
 });
+*/
 
 // React to clicks on agreement Buttons
 $("#btn_agreement").click(signalExpressAgreement);
@@ -378,67 +434,67 @@ function intervalTrigger() {
 
 function countDownTalkTime() {
 
-	if (secondsSilent > 6){
-		// reset
-		secondsSilent = 0;
-		log("you don't say much... talk stopped.");
-	    signalDoneTalking();
-	    // remove this interval trigger
-	    window.clearInterval(timeCountdownInterval);
-	    talkStartedAt = null;
-	    timeTalked = null;
-	    return;
-	}
+    if (secondsSilent > 9) {
+        // reset
+        secondsSilent = 0;
+        log("you don't say much... talk stopped.");
+        // remove this interval trigger
+        window.clearInterval(timeCountdownInterval);
+        signalDoneTalking();
+        talkStartedAt = null;
+        timeTalked = null;
+        return;
+    }
 
-	if(currentAudioLevel < 0.1){
-		secondsSilent += 1;
-	}else {
-		secondsSilent = 0;
-	}
+    if (currentAudioLevel < 0.1) {
+        secondsSilent += 1;
+    } else {
+        secondsSilent = 0;
+    }
 
-	// issue warning to talker
-	if(secondsSilent > 3){
-		log("use your time to talk...");
-	}
+    // issue warning to talker
+    if (secondsSilent > 3) {
+        log("use your time to talk...");
+    }
 
 
-	
-	/*
-	// this works already
 
-	if(histAudioLevel.length < 14){
-		histAudioLevel.push(currentAudioLevel);
-	}else{
-		histAudioLevel.shift();
-		histAudioLevel.push(currentAudioLevel);
+    /*
+    // this works already
 
-		var sumOld = histAudioLevel.slice(0,(histAudioLevel.length/2)-1).reduce(function(a, b) { return a + b; });
-		var sumNew = histAudioLevel.slice(histAudioLevel.length/2, histAudioLevel.length -1).reduce(function(a, b) { return a + b; });
-		var avgOld = sumOld/(histAudioLevel.length/2);
-		var avgNew = sumNew/(histAudioLevel.length/2);
-		log("avg old: " + avgOld);
-		log("avg new: " + avgNew);
+    if(histAudioLevel.length < 14){
+    	histAudioLevel.push(currentAudioLevel);
+    }else{
+    	histAudioLevel.shift();
+    	histAudioLevel.push(currentAudioLevel);
 
-		// if differnce between averages is more the 95% of old average: stop talking
-		if(Math.abs(avgOld - avgNew) > 0.95 * avgOld){
-			log("you don't say much... talk stopped.");
-	        signalDoneTalking();
-	        // remove this interval trigger
-	        window.clearInterval(timeCountdownInterval);
-	        talkStartedAt = null;
-	        timeTalked = null;
-	        return;
-		}
-		
-		// Till here
-		*/
+    	var sumOld = histAudioLevel.slice(0,(histAudioLevel.length/2)-1).reduce(function(a, b) { return a + b; });
+    	var sumNew = histAudioLevel.slice(histAudioLevel.length/2, histAudioLevel.length -1).reduce(function(a, b) { return a + b; });
+    	var avgOld = sumOld/(histAudioLevel.length/2);
+    	var avgNew = sumNew/(histAudioLevel.length/2);
+    	log("avg old: " + avgOld);
+    	log("avg new: " + avgNew);
 
-		// caluclate average
-		// var sum = histAudioLevel.reduce(function(a, b) { return a + b; });
-		// var avg = sum / histAudioLevel.length;
-		// log("avg Audio level in the last 8 seconds: " + avg);
-		//log(JSON.stringify(histAudioLevel));
-		/*
+    	// if differnce between averages is more the 95% of old average: stop talking
+    	if(Math.abs(avgOld - avgNew) > 0.95 * avgOld){
+    		log("you don't say much... talk stopped.");
+            signalDoneTalking();
+            // remove this interval trigger
+            window.clearInterval(timeCountdownInterval);
+            talkStartedAt = null;
+            timeTalked = null;
+            return;
+    	}
+    	
+    	// Till here
+    	*/
+
+    // caluclate average
+    // var sum = histAudioLevel.reduce(function(a, b) { return a + b; });
+    // var avg = sum / histAudioLevel.length;
+    // log("avg Audio level in the last 8 seconds: " + avg);
+    //log(JSON.stringify(histAudioLevel));
+    /*
 		if(avg <= 0.1){
 			log("you don't say much... talk stopped.");
 	        signalDoneTalking();
@@ -449,8 +505,7 @@ function countDownTalkTime() {
 	        return;
 		}
 		*/
-	//}
-
+    //}
     var talkTimeNow = new Date().getTime() / 1000;
     var timeTalked = talkTimeNow - talkingStartedAt;
     if (timeTalked >= maxTalkingTime) {
@@ -498,25 +553,26 @@ function getRandomInt(min, max) {
 }
 
 function updateUiTalkStatus() {
-        $(".label-talkstatus").html("");
-        $(".timeleft-progress").html("");
-        $(".timeleft-progress").css("width", "100%");
+    //log("Update Ui Talk status called")
+    $(".label-talkstatus").html("");
+    $(".timeleft-progress").html("");
+    $(".timeleft-progress").css("width", "100%");
 
-        if (talksNow != null) {
-            $(uiTalkStatus + talksNow).html(`<span class="glyphicon glyphicon-volume-up" aria-hidden="true">`);
-        }
+    if (talksNow != null) {
+        $(uiTalkStatus + talksNow).html(`<span class="glyphicon glyphicon-volume-up" aria-hidden="true">`);
+    }
 }
 
-function updateUiQueue(){
-	// clear html element
-	$(uiQueueList).html("");
-	// write new ol from current waiting list
-	var html = "<ol>";
-	for (var i =0; i < talkingQueue.length; i++) {
-    	html += "<li>" + talkingQueue[i].split("-")[0]+ "</li>";
-	}
-	html += "</ol>";
-	$(uiQueueList).html(html);
+function updateUiQueue() {
+    // clear html element
+    $(uiQueueList).html("");
+    // write new ol from current waiting list
+    var html = "<ol>";
+    for (var i = 0; i < talkingQueue.length; i++) {
+        html += "<li>" + talkingQueue[i].split("-")[0] + "</li>";
+    }
+    html += "</ol>";
+    $(uiQueueList).html(html);
 
 }
 
@@ -557,26 +613,81 @@ function addStreamToHTML(fullUserName, style) {
 
 // Signal Agreement or Disagreement nonverbaly
 // ############################################################################
-function expressAgreement(fullUserName){
-	// delete appended span
-	$("#animate-agreement").remove();
-	$(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-up" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
-	$("#animate-agreement").animate({
-            opacity: '1.0'
-        });
-	$("#animate-agreement").animate({
-            opacity: '0.0'
-        });
+function expressAgreement(fullUserName) {
+    // delete appended span
+    /*
+    $("#animate-agreement").remove();
+    $(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-up" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
+    $("#animate-agreement").animate({
+        opacity: '1.0'
+    });
+    $("#animate-agreement").animate({
+        opacity: '0.0'
+    });
+    */
+
+    // get offset position of emitting stream
+
+    var position = $(uiStreamContainer + fullUserName).offset();
+    var width = $(uiStreamContainer + fullUserName).width();
+    var height = $(uiStreamContainer + fullUserName).height();
+    var centerX = position.left + width / 2;
+    var centerY = position.top + height / 2;
+    var textSize = 100;
+    var html = `<span class="glyphicon glyphicon-thumbs-up" id="animate-agreement" aria-hidden="true" style="opacity: 0.0;  font-size: 100px; color: green; position: fixed;">`;
+
+
+    $(document.body).append(html);
+    $("#animate-agreement").css("left", centerX - 50);
+    $("#animate-agreement").css("top", centerY - 50);
+    $("#animate-agreement").css("position", "fixed");
+
+    $("#animate-agreement").animate({
+        opacity: '1.0'
+    });
+    $("#animate-agreement").animate({
+        opacity: '0.0',
+        complete: function() {
+            $("#animate-agreement").remove();
+        }
+    });
+
 }
 
-function expressDisagreement(fullUserName){
-	// delete appended span
-	$("#animate-agreement").remove();
-	$(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-down" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
-	$("#animate-agreement").animate({
-            opacity: '1.0'
-        });
-	$("#animate-agreement").animate({
-            opacity: '0.0'
-        });
+function expressDisagreement(fullUserName) {
+    // delete appended span
+    /*
+    $("#animate-agreement").remove();
+    $(uiUserName + fullUserName).append(`<span class="glyphicon glyphicon-thumbs-down" id="animate-agreement" aria-hidden="true" style=" opacity: 0.0; float: right">`)
+    $("#animate-agreement").animate({
+        opacity: '1.0'
+    });
+    $("#animate-agreement").animate({
+        opacity: '0.0'
+    });
+    */
+
+    var position = $(uiStreamContainer + fullUserName).offset();
+    var width = $(uiStreamContainer + fullUserName).width();
+    var height = $(uiStreamContainer + fullUserName).height();
+    var centerX = position.left + width / 2;
+    var centerY = position.top + height / 2;
+    var textSize = 100;
+    var html = `<span class="glyphicon glyphicon-thumbs-down" id="animate-disagreement" aria-hidden="true" style="opacity: 0.0;  font-size: 100px; color: red; position: fixed;">`;
+
+
+    $(document.body).append(html);
+    $("#animate-disagreement").css("left", centerX - 50);
+    $("#animate-disagreement").css("top", centerY - 50);
+    $("#animate-disagreement").css("position", "fixed");
+
+    $("#animate-disagreement").animate({
+        opacity: '1.0'
+    });
+    $("#animate-disagreement").animate({
+        opacity: '0.0',
+        complete: function() {
+            $("#animate-disagreement").remove();
+        }
+    });
 }
