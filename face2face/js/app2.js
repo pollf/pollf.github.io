@@ -39,6 +39,7 @@ var streamArea = "#stream-area";
 var uiUserNameInput = "#user-name-input";
 var uiLog = "#log-text-area";
 var uiQueueList = "#queue-area-list-container";
+var btnSuperpower = "#btn_superpower";
 
 
 
@@ -47,6 +48,10 @@ var uiQueueList = "#queue-area-list-container";
 var maxTalkingTime = 60; // in seconds
 var talkingStartedAt;
 var timeCountdownInterval;
+// can be used to get at top of queue directly or to extend talk time by amount
+var superpower = 3;
+// Seconds gained if talk time is extended
+var extendTalkTimeBy = 20;
 // for audi level monitoring
 var currentAudioLevel;
 var histAudioLevel = [];
@@ -229,6 +234,13 @@ function signalLeaveQueue() {
     });
 }
 
+// Signal that you want want to use one superpower action
+function signalUseSuperpower() {
+    session.signal({
+        data: "useSuperPower#" + myFullUserName
+    });
+}
+
 // ##################################################################
 // Processing Signals
 function receiveSignal(event) {
@@ -269,6 +281,10 @@ function receiveSignal(event) {
         case "leaveQueue":
             var senderFullName = res[1];
             handleLeaveQueue(senderFullName);
+            break;
+        case "useSuperPower":
+            var senderFullName = res[1];
+            handleUseSuperpower(senderFullName);
             break;
         default:
             log("ERROR: signaled command not found " + cmd);
@@ -364,6 +380,63 @@ function handleLeaveQueue(senderFullName) {
     visualizeLeaveQueue(senderFullName);
 }
 
+function handleUseSuperpower(senderFullName) {
+    // visulaize that some used a superpower
+    // if Sender is you and you are already talking, extend talk time
+    log("handleUseSuperpower")
+    if (senderFullName === talksNow && myFullUserName === senderFullName) {
+        log("extend your talktime");
+        // shift talk start
+        talkingStartedAt += extendTalkTimeBy;
+    }
+
+    // if the queue is empty, you essentially wasted one superpower...
+    if (talksNow != senderFullName && talkingQueue.length === 0) {
+        //log("Someone wasted his Superpower :D", true);
+        // use normal way to get in the queue
+        if (senderFullName === myFullUserName) {
+            signalLetMeTalk();
+        }
+    }
+
+    // if the queue is not empty
+    if (talkingQueue.length > 0) {
+        // put sender in the first place and update queue ui
+
+        // if sender is already in the Queue, just change his position
+        var inQueue = $.inArray(senderFullName, talkingQueue);
+        if (inQueue != -1) {
+            // get current position of tailgater
+            var idx = talkingQueue.indexOf(senderFullName);
+            if (idx === 0) {
+                // wasted a superpower...
+                return;
+            }
+            // get subarray of everyone above the tailgater
+            var above = talkingQueue.slice(0, idx);
+            // and the ones below
+            var below = talkingQueue.slice(idx + 1, talkingQueue.length);
+            // put sender at first place
+            var talkingQueueTMP = [];
+            talkingQueueTMP.push(senderFullName);
+            talkingQueueTMP = talkingQueueTMP.concat(above);
+            talkingQueueTMP = talkingQueueTMP.concat(below);
+            talkingQueue = talkingQueueTMP;
+            updateUiQueue();
+        }
+
+        // if hes not already in the queue insert him to first position
+        if (inQueue == -1) {
+            var talkingQueueTMP = [];
+            talkingQueueTMP.push(senderFullName);
+            talkingQueueTMP = talkingQueueTMP.concat(talkingQueue);
+            talkingQueue = talkingQueueTMP;
+            updateUiQueue();
+        }
+    }
+
+}
+
 // React to Button Clicks
 // ############################################################################
 
@@ -380,6 +453,20 @@ $("#btn_toggle_video").click(function() {
 
 // Send a let me talk signal
 $("#btn_letmetalk").click(manageTalk);
+
+$(btnSuperpower).click(function() {
+    if (superpower > 0) {
+        // use up one superpower
+        superpower -= 1;
+        // display left superpower
+        $("#superpower_badge").html(superpower);
+        signalUseSuperpower();
+    }
+    if (superpower === 0) {
+        // disable button
+        $(btnSuperpower).prop('disabled', true);
+    }
+});
 
 // A click on Spacebar does the same than a click on the talk button
 document.body.onkeyup = function(e) {
