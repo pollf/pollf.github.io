@@ -382,6 +382,16 @@ function handleLeaveQueue(senderFullName) {
 
 function handleUseSuperpower(senderFullName) {
     // visulaize that some used a superpower
+    $("#" + senderFullName).addClass('panel-stream-superpower', 100);
+    $("#" + senderFullName).animate({
+        '': ''
+    }, {
+        complete: function() {
+
+            $("#" + senderFullName).removeClass('panel-stream-superpower', 100);
+        }
+    }, 100);
+
     // if Sender is you and you are already talking, extend talk time
     log("handleUseSuperpower")
     if (senderFullName === talksNow && myFullUserName === senderFullName) {

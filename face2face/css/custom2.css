@@ -64,6 +64,10 @@
 	border-radius: 3px;
 }
 
+.panel-stream-superpower{
+	background-color: #ccff80;
+}
+
 /* heres the actual video stream */
 .stream-panel-body{
 	height: 100px;
