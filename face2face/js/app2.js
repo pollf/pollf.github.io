@@ -58,6 +58,17 @@ var histAudioLevel = [];
 // used for couning how many seconds at a time the talker was silent
 var secondsSilent;
 
+
+// keeping track of conversational turn taking (CSV)
+var meetingAnalytics = "order;name;seconds\n";
+// this is to keep track talks were started in the meeting
+// is incremented everytime someone gets to talk
+var talkingOrder = 0;
+// initialized when someone gets to talk or stops talking
+var talkerStartedAt;
+//var talkerStopedAt;
+
+
 // ############################################################################
 
 //var rect = document.getElementById("log-panel").getBoundingClientRect();
@@ -299,12 +310,17 @@ function handleLetMeTalk(streamName) {
         // if you are the one that wants to talk
         if (streamName === myFullUserName) {
             myPublisher.publishAudio(true)
-                // for timekeeping
+                // warn user that its his turn now (via audio)
+            var audio = new Audio('./res/five-beeps.wav');
+            audio.play();
+            // for timekeeping
             talkingStartedAt = new Date().getTime() / 1000;
             timeCountdownInterval = intervalTrigger();
         }
         // In every case, set the talksNow Variable
         talksNow = streamName;
+        // for meeting analytics
+        talkerStartedAt = new Date().getTime() / 1000;
         log(talksNow + " is now talking");
         updateUiTalkStatus();
         // if somebody is already talking
@@ -340,15 +356,23 @@ function handleDoneTalking(streamName) {
         talksNow = talkingQueue.shift();
         log(talksNow + "is now talking");
         if (talksNow == myFullUserName) {
+            // warn user that its his turn now (via audio)
+            var audio = new Audio('./res/five-beeps.wav');
+            audio.play();
             // for timekeeping
             myPublisher.publishAudio(true);
             talkingStartedAt = new Date().getTime() / 1000;
             timeCountdownInterval = intervalTrigger();
         }
+        // for meeting analytics
+        talkerStartedAt = new Date().getTime() / 1000;
         updateUiTalkStatus();
         // Update Queue UI 
         updateUiQueue();
     }
+
+    // add talkdata to analytics csv
+    addToAnalytics(streamName);
 }
 
 function handleTalkTimeLeft(streamName, talkTimeLeft) {
@@ -624,6 +648,32 @@ function countDownTalkTime() {
     signalTalkTimeLeft(maxTalkingTime - timeTalked);
 }
 
+// Meeting Analytics
+// ############################################################################
+function addToAnalytics(streamName) {
+    // increment order counter by one
+    talkingOrder += 1;
+    // calculate talk time of last talker
+    var timeNow = new Date().getTime() / 1000;
+    var userTalkedFor = timeNow - talkerStartedAt;
+    // reset
+    talkerStartedAt = null;
+    //construct csv to add
+    meetingAnalytics += talkingOrder + ";" + streamName + ";" + userTalkedFor.toFixed(2) + "\n"
+    log(meetingAnalytics);
+}
+
+$("#get-analytics").click(downloadAnalytics);
+
+function downloadAnalytics() {
+    // force download
+    meetingAnalytics = meetingAnalytics.replace(/\n/g, "\r\n");
+    window.location.href = "data:application/octet-stream," + encodeURIComponent(meetingAnalytics);
+}
+
+window.onbeforeunload = function() {
+    //return "Do you really want to close?";
+};
 
 // Logging
 // ############################################################################
