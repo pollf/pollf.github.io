@@ -68,6 +68,9 @@ var talkingOrder = 0;
 var talkerStartedAt;
 //var talkerStopedAt;
 
+// Audio Files
+var talkingSound = new Audio('./res/five-beeps.wav');
+var doneTalkingSound = new Audio('./res/five-beeps.wav');
 
 // ############################################################################
 
@@ -311,8 +314,7 @@ function handleLetMeTalk(streamName) {
         if (streamName === myFullUserName) {
             myPublisher.publishAudio(true)
                 // warn user that its his turn now (via audio)
-            var audio = new Audio('./res/five-beeps.wav');
-            audio.play();
+            talkingSound.play();
             // for timekeeping
             talkingStartedAt = new Date().getTime() / 1000;
             timeCountdownInterval = intervalTrigger();
@@ -357,8 +359,8 @@ function handleDoneTalking(streamName) {
         log(talksNow + "is now talking");
         if (talksNow == myFullUserName) {
             // warn user that its his turn now (via audio)
-            var audio = new Audio('./res/five-beeps.wav');
-            audio.play();
+
+            talkingSound.play();
             // for timekeeping
             myPublisher.publishAudio(true);
             talkingStartedAt = new Date().getTime() / 1000;
@@ -728,6 +730,7 @@ function updateUiQueue() {
     $(uiQueueList).html(html);
 
 }
+
 
 
 
