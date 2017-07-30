@@ -69,8 +69,12 @@ var talkerStartedAt;
 //var talkerStopedAt;
 
 // Audio Files
-var talkingSound = new Audio('./res/five-beeps.wav');
-var doneTalkingSound = new Audio('./res/five-beeps.wav');
+var talkingSound = new Audio('./res/confirmation1.wav');
+var doneTalkingSound = new Audio('./res/disconnect.wav');
+var superpowerSound = new Audio('./res/gong1.wav');
+var queueInSound = new Audio('./res/queueIn.wav');
+var queueOutSound = new Audio('./res/queueOut.wav');
+
 
 // ############################################################################
 
@@ -344,6 +348,7 @@ function handleDoneTalking(streamName) {
     // if ther is nobody waiting to talk
     if (streamName === myFullUserName) {
         myPublisher.publishAudio(false);
+        doneTalkingSound.play();
         // Stop Timer
         window.clearInterval(timeCountdownInterval);
         updateUiTalkStatus();
@@ -407,6 +412,8 @@ function handleLeaveQueue(senderFullName) {
 }
 
 function handleUseSuperpower(senderFullName) {
+    // play Audio to inform everybody of superpower usage
+    superpowerSound.play();
     // visulaize that some used a superpower
     $("#" + senderFullName).addClass('panel-stream-superpower', 100);
     $("#" + senderFullName).animate({
@@ -424,6 +431,7 @@ function handleUseSuperpower(senderFullName) {
         log("extend your talktime");
         // shift talk start
         talkingStartedAt += extendTalkTimeBy;
+        return;
     }
 
     // if the queue is empty, you essentially wasted one superpower...
@@ -435,8 +443,8 @@ function handleUseSuperpower(senderFullName) {
         }
     }
 
-    // if the queue is not empty
-    if (talkingQueue.length > 0) {
+    // if the queue is not empty and the sender is not already talking
+    if (talkingQueue.length > 0 && talksNow != senderFullName) {
         // put sender in the first place and update queue ui
 
         // if sender is already in the Queue, just change his position
@@ -492,6 +500,12 @@ $("#btn_letmetalk").click(manageTalk);
 
 $(btnSuperpower).click(function() {
     if (superpower > 0) {
+        // check if it makes sense to use a superpower right now
+        var inQueue = $.inArray(myFullUserName, talkingQueue);
+        if (talksNow == null || (talkingQueue.length == 0) || (talkingQueue.length == 1 && inQueue != -1)) {
+            log("don't waste your superpower points");
+            return;
+        }
         // use up one superpower
         superpower -= 1;
         // display left superpower
@@ -853,6 +867,7 @@ function expressDisagreement(fullUserName) {
 // Visualize adding or leaving the Queue
 // ############################################################################
 function visualizeAddQueue(streamName) {
+    queueInSound.play();
     var position = $(uiStreamContainer + streamName).offset();
     var width = $(uiStreamContainer + streamName).width();
     var height = $(uiStreamContainer + streamName).height();
@@ -887,6 +902,7 @@ function visualizeAddQueue(streamName) {
 }
 
 function visualizeLeaveQueue(streamName) {
+    queueOutSound.play();
     var position = $(uiStreamContainer + streamName).offset();
     var width = $(uiStreamContainer + streamName).width();
     var height = $(uiStreamContainer + streamName).height();
