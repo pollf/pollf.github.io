@@ -502,7 +502,7 @@ $(btnSuperpower).click(function() {
     if (superpower > 0) {
         // check if it makes sense to use a superpower right now
         var inQueue = $.inArray(myFullUserName, talkingQueue);
-        if (talksNow == null || (talkingQueue.length == 0) || (talkingQueue.length == 1 && inQueue != -1)) {
+        if (talksNow == null || (talkingQueue.length == 0 && talksNow != myFullUserName) || (talkingQueue.length == 1 && inQueue != -1)) {
             log("don't waste your superpower points");
             return;
         }
