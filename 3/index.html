@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="./progressbar.js"></script>
+    <link rel="stylesheet" href="./style.css">
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <div class="wrapper">
+        <img src="./example-user.jpg"></img>
+        <div id="bar"></div>
+    </div>
+    <button type="button" onclick="countDown()">count down</button>
+
+    <script type="text/javascript">
+      var bar = new ProgressBar.Circle('#bar', {
+        strokeWidth: 4,
+        //easing: 'easeInOut',
+        duration: 2500,
+        color: 'url(#gradient)',
+        trailColor: '#eee',
+        trailWidth: 1,
+        svgStyle: null,
+        });
+
+      // Define a linearGradient element
+      // Notice that the "gradientUnits" attribute is set to "userSpaceOnUse" this is important to work properly
+      //background: linear-gradient(315deg, #4ABAC4 0%, #87328B 100%);
+      var linearGradient = `
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
+            <stop offset="20%" stop-color="#4ABAC4"/>
+            <stop offset="50%" stop-color="#87328B"/>
+          </linearGradient>
+        </defs>
+      `
+      // append the linearGradient to svg
+      bar.svg.insertAdjacentHTML('afterBegin', linearGradient);
+      bar.path.style.strokeLinecap = 'round';
+
+      bar.animate(0.9);  // Number from 0.0 to 1.0
+
+      function countDown(){
+        bar.animate(0,{
+            duration: 20000
+        })
+      }
+
+    </script>
+  </body>
+</html>

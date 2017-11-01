@@ -1,0 +1,42 @@
+.Aligner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Aligner-item {
+  max-width: 50%;
+}
+
+
+svg {
+    width: 100%;
+    display: block;
+}
+
+.wrapper {
+    position: relative;
+    margin: auto;
+    width: 600px;
+    height: 600px;
+}
+
+.wrapper > #bar, .wrapper > img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.wrapper > img {
+    /* Needs appropriate vendor prefixes */
+    box-sizing: border-box;
+
+    /* This needs to be equal to strokeWidth */
+    padding: 4%;
+}
+
+.wrapper > img {
+    border-radius: 50%;
+}
